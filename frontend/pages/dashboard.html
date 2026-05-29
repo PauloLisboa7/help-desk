@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Help Desk Corporativo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#dashboard">
+                <i class="fas fa-headset"></i> Help Desk Corporativo
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <span class="nav-link" id="usuarioNome">
+                            <i class="fas fa-user-circle"></i> 
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" id="logout">
+                            <i class="fas fa-sign-out-alt"></i> Sair
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-2 bg-light sidebar">
+                <div class="sidebar-sticky">
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#dashboard">
+                                <i class="fas fa-chart-line"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#novo-chamado">
+                                <i class="fas fa-plus-circle"></i> Novo Chamado
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#meus-chamados">
+                                <i class="fas fa-list"></i> Meus Chamados
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#chamados-abertos">
+                                <i class="fas fa-clock"></i> Chamados Abertos
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#inventario">
+                                <i class="fas fa-boxes"></i> Inventário
+                            </a>
+                        </li>
+                        <li class="nav-item" id="adminMenu" style="display:none;">
+                            <a class="nav-link" href="#relatorios">
+                                <i class="fas fa-file-alt"></i> Relatórios
+                            </a>
+                        </li>
+                        <li class="nav-item" id="adminMenu2" style="display:none;">
+                            <a class="nav-link" href="#usuarios">
+                                <i class="fas fa-users"></i> Usuários
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-10 ms-sm-auto px-md-4">
+                <div id="dashboard" class="content-section">
+                    <div class="d-flex justify-content-between align-items-center my-4">
+                        <h1><i class="fas fa-chart-line"></i> Dashboard</h1>
+                        <button class="btn btn-primary" onclick="location.href='#novo-chamado'">
+                            <i class="fas fa-plus"></i> Novo Chamado
+                        </button>
+                    </div>
+
+                    <!-- Cards de Resumo -->
+                    <div class="row">
+                        <div class="col-md-3 mb-4">
+                            <div class="card dashboard-card">
+                                <div class="card-body">
+                                    <h5 class="card-title text-muted">Chamados Abertos</h5>
+                                    <h2 class="text-primary" id="countAbertos">0</h2>
+                                    <small class="text-muted">Aguardando atendimento</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card dashboard-card">
+                                <div class="card-body">
+                                    <h5 class="card-title text-muted">Em Atendimento</h5>
+                                    <h2 style="color: #003d7a;" id="countAtendimento">0</h2>
+                                    <small class="text-muted">Sendo resolvidos</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card dashboard-card">
+                                <div class="card-body">
+                                    <h5 class="card-title text-muted">Resolvidos Hoje</h5>
+                                    <h2 class="text-success" id="countResolvidos">0</h2>
+                                    <small class="text-muted">Finalizados</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <div class="card dashboard-card">
+                                <div class="card-body">
+                                    <h5 class="card-title text-muted">Vencendo SLA</h5>
+                                    <h2 class="text-danger" id="countSlaVencido">0</h2>
+                                    <small class="text-muted">Atenção!</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Painéis por perfil (admin / tecnico / usuario) -->
+                    <div class="row">
+                        <div id="adminPanel" class="col-12" style="display:none;">
+                            <div class="card mb-4">
+                                <div class="card-header"><strong>Painel do Administrador</strong></div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="small text-muted">Total de Usuários</div>
+                                            <h3 id="adminTotalUsuarios">0</h3>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="small text-muted">Usuários Online</div>
+                                            <h3 id="adminUsuariosOnline">0</h3>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="small text-muted">Chamados Totais</div>
+                                            <h3 id="adminChamadosTotais">0</h3>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div>
+                                        <h6>Últimos Chamados (com usuário)</h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm" id="adminChamadosTable">
+                                                <thead><tr><th>#</th><th>Título</th><th>Usuário</th><th>Status</th><th>Data</th></tr></thead>
+                                                <tbody></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="tecnicoPanel" class="col-12" style="display:none;">
+                            <div class="card mb-4">
+                                <div class="card-header"><strong>Painel do Técnico</strong></div>
+                                <div class="card-body">
+                                    <p>Ferramentas de manutenção: editar chamados, atribuir técnicos, e registrar intervenções.</p>
+                                    <button id="abrirManutencao" class="btn btn-warning btn-sm">Abrir painel de manutenção</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="usuarioPanel" class="col-12" style="display:none;">
+                            <div class="card mb-4">
+                                <div class="card-header"><strong>Painel do Usuário</strong></div>
+                                <div class="card-body">
+                                    <p>Ações rápidas: abrir novo chamado e acompanhar chamados seus.</p>
+                                    <a href="#novo-chamado" class="btn btn-primary btn-sm" id="linkNovoChamado">Abrir Novo Chamado</a>
+                                    <hr>
+                                    <h6>Seus Chamados Recentes</h6>
+                                        <div class="table-responsive">
+                                        <table class="table table-sm" id="usuarioMeusChamadosTable">
+                                            <thead><tr><th>#</th><th>Título</th><th>Status</th><th>Data</th></tr></thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabela de Chamados Recentes -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-list"></i> Chamados Recentes</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Título</th>
+                                            <th>Prioridade</th>
+                                            <th>Status</th>
+                                            <th>Data</th>
+                                            <th>Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="chamadosTable">
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">Carregando...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Novo Chamado -->
+                <div id="novo-chamado" class="content-section" style="display:none;">
+                    <h1 class="my-4"><i class="fas fa-plus-circle"></i> Abrir Novo Chamado</h1>
+                    <form id="novoChamadoForm" class="card p-4">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="titulo" class="form-label">Título *</label>
+                                <input type="text" class="form-control" id="titulo" name="titulo" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="categoria" class="form-label">Categoria *</label>
+                                <select class="form-select" id="categoria" name="categoria" required>
+                                    <option value="">Selecione...</option>
+                                    <option>Computador</option>
+                                    <option>Rede</option>
+                                    <option>Impressora</option>
+                                    <option>Sistema</option>
+                                    <option>Infraestrutura</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="descricao" class="form-label">Descrição Detalhada *</label>
+                            <textarea class="form-control" id="descricao" name="descricao" rows="4" required></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="prioridade" class="form-label">Prioridade *</label>
+                                <select class="form-select" id="prioridade" name="prioridade" required>
+                                    <option value="baixa">Baixa</option>
+                                    <option value="media" selected>Média</option>
+                                    <option value="alta">Alta</option>
+                                    <option value="critica">Crítica</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="anexo" class="form-label">Anexar Arquivo</label>
+                                <input type="file" class="form-control" id="anexo" name="anexo">
+                                <small class="form-text text-muted">Máximo 10MB</small>
+                            </div>
+                        </div>
+
+                        <div id="alertArea"></div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Enviar Chamado
+                            </button>
+                            <button type="reset" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> Limpar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Meus Chamados -->
+                <div id="meus-chamados" class="content-section" style="display:none;">
+                    <h1 class="my-4"><i class="fas fa-list"></i> Meus Chamados</h1>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Título</th>
+                                    <th>Status</th>
+                                    <th>Prioridade</th>
+                                    <th>Data</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="meusChamadosTable">
+                                <tr>
+                                    <td colspan="6" class="text-center">Nenhum chamado encontrado</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>
