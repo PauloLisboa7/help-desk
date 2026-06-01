@@ -9,6 +9,7 @@
     "dev": "nodemon backend/src/app-dev.js",
     "dev:test": "NODE_ENV=development node backend/src/app-dev.js",
     "migrate": "node backend/src/config/database.js",
+    "seed": "node backend/src/seed.js",
     "test": "jest --coverage",
     "lint": "eslint backend/src --fix",
     "docker:build": "docker-compose build",

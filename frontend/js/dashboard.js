@@ -266,12 +266,180 @@ function updateChamadosTable(chamados) {
     });
 }
 
+const loadedSections = new Set();
+
+async function handleSectionLoad(sectionId) {
+    if (loadedSections.has(sectionId)) {
+        return;
+    }
+
+    switch (sectionId) {
+        case 'chamados-abertos':
+            await loadChamadosAbertos();
+            break;
+        case 'inventario':
+            await loadInventario();
+            break;
+        case 'relatorios':
+            await loadRelatorios();
+            break;
+        case 'usuarios':
+            await loadUsuarios();
+            break;
+        default:
+            return;
+    }
+
+    loadedSections.add(sectionId);
+}
+
+async function loadChamadosAbertos() {
+    try {
+        const resp = await authManager.fetch('/dashboard/chamados-abertos');
+        if (!resp.ok) {
+            throw new Error('Falha ao carregar chamados abertos');
+        }
+
+        const data = await resp.json();
+        const tbody = document.getElementById('chamadosAbertosTable');
+        tbody.innerHTML = '';
+
+        if (!data.chamadosAbertos || data.chamadosAbertos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum chamado aberto encontrado</td></tr>';
+            return;
+        }
+
+        data.chamadosAbertos.forEach(chamado => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${chamado.numero_chamado || chamado.id}</td>
+                <td>${escapeHtml(chamado.titulo)}</td>
+                <td>${escapeHtml(chamado.prioridade || 'média')}</td>
+                <td>${String(chamado.status).replace(/_/g, ' ')}</td>
+                <td>${formatDate(chamado.criado_em)}</td>
+                <td><button class="btn btn-sm btn-primary" type="button">Ver</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function loadInventario() {
+    try {
+        const resp = await authManager.fetch('/dashboard/inventario');
+        if (!resp.ok) {
+            throw new Error('Falha ao carregar inventário');
+        }
+
+        const data = await resp.json();
+        const tbody = document.getElementById('inventarioTable');
+        tbody.innerHTML = '';
+
+        if (!data.inventario || data.inventario.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum equipamento cadastrado</td></tr>';
+            return;
+        }
+
+        data.inventario.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.id}</td>
+                <td>${escapeHtml(item.tipo)}</td>
+                <td>${escapeHtml(item.modelo)}</td>
+                <td>${escapeHtml(item.serie)}</td>
+                <td>${escapeHtml(item.localizacao)}</td>
+                <td>${escapeHtml(item.responsavel)}</td>
+                <td>${escapeHtml(item.status)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function loadUsuarios() {
+    try {
+        const resp = await authManager.fetch('/dashboard/usuarios');
+        if (!resp.ok) {
+            throw new Error('Falha ao carregar usuários');
+        }
+
+        const data = await resp.json();
+        const tbody = document.getElementById('usuariosTable');
+        tbody.innerHTML = '';
+
+        if (!data.usuarios || data.usuarios.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhum usuário encontrado</td></tr>';
+            return;
+        }
+
+        data.usuarios.forEach(user => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${user.id}</td>
+                <td>${escapeHtml(user.nome)}</td>
+                <td>${escapeHtml(user.email)}</td>
+                <td>${escapeHtml(user.perfil)}</td>
+                <td>${user.ativo ? 'Ativo' : 'Inativo'}</td>
+                <td>${formatDate(user.criado_em)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+async function loadRelatorios() {
+    try {
+        const resp = await authManager.fetch('/dashboard/relatorios');
+        if (!resp.ok) {
+            throw new Error('Falha ao carregar relatórios');
+        }
+
+        const data = await resp.json();
+
+        document.getElementById('relatorioChamadosTotais').textContent = data.totalChamados || 0;
+        document.getElementById('relatorioUsuariosTotais').textContent = data.totalUsuarios || 0;
+        document.getElementById('relatorioEquipamentosTotais').textContent = data.totalEquipamentos || 0;
+
+        const statusBody = document.getElementById('relatorioStatusTable');
+        statusBody.innerHTML = '';
+        if (!data.statusSummary || data.statusSummary.length === 0) {
+            statusBody.innerHTML = '<tr><td colspan="2" class="text-center">Nenhum dado disponível</td></tr>';
+        } else {
+            data.statusSummary.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${escapeHtml(row.status)}</td><td>${row.total}</td>`;
+                statusBody.appendChild(tr);
+            });
+        }
+
+        const categoryBody = document.getElementById('relatorioCategoriaTable');
+        categoryBody.innerHTML = '';
+        if (!data.categoriaSummary || data.categoriaSummary.length === 0) {
+            categoryBody.innerHTML = '<tr><td colspan="2" class="text-center">Nenhum dado disponível</td></tr>';
+        } else {
+            data.categoriaSummary.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${escapeHtml(row.categoria)}</td><td>${row.total}</td>`;
+                categoryBody.appendChild(tr);
+            });
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
 function setupNavigation() {
     // Links da sidebar
     const navLinks = document.querySelectorAll('.nav-link');
     
     navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
+        link.addEventListener('click', async function(e) {
             e.preventDefault();
             
             // Remover classe active de todos os links
@@ -289,10 +457,36 @@ function setupNavigation() {
             const targetSection = document.getElementById(targetId);
             if (targetSection) {
                 targetSection.style.display = 'block';
+                await handleSectionLoad(targetId);
                 window.scrollTo(0, 0);
             }
         });
     });
+}
+
+async function handleSectionLoad(sectionId) {
+    if (loadedSections.has(sectionId)) {
+        return;
+    }
+
+    switch (sectionId) {
+        case 'chamados-abertos':
+            await loadChamadosAbertos();
+            break;
+        case 'inventario':
+            await loadInventario();
+            break;
+        case 'relatorios':
+            await loadRelatorios();
+            break;
+        case 'usuarios':
+            await loadUsuarios();
+            break;
+        default:
+            break;
+    }
+
+    loadedSections.add(sectionId);
 }
 
 function setupForms() {

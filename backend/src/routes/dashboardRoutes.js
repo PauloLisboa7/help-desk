@@ -5,34 +5,51 @@ import { authenticateToken, requireRole } from '../middleware/auth.js';
 const pool = dbModule.pool;
 const router = express.Router();
 
-// GET /api/dashboard/stats - Estatísticas gerais do dashboard (não sensíveis)
-router.get('/stats', async (req, res) => {
+// GET /api/dashboard/stats - Estatísticas gerais do dashboard (por perfil)
+router.get('/stats', authenticateToken, async (req, res) => {
   try {
-    // Chamados abertos
-    const abertos = await pool.query(
-      "SELECT COUNT(*) as total FROM chamados WHERE status = 'aberto'"
-    );
+    const perfil = req.user.perfil;
+    let countsQuery;
+    let params = [];
 
-    // Chamados em atendimento
-    const emAtendimento = await pool.query(
-      "SELECT COUNT(*) as total FROM chamados WHERE status = 'em_atendimento'"
-    );
+    if (perfil === 'administrador') {
+      countsQuery = `
+        SELECT
+          COUNT(*) FILTER (WHERE status = 'aberto') as abertos,
+          COUNT(*) FILTER (WHERE status = 'em_atendimento') as em_atendimento,
+          COUNT(*) FILTER (WHERE status = 'resolvido') as resolvidos,
+          COUNT(*) FILTER (WHERE status = 'fechado') as fechados
+        FROM chamados`;
+    } else if (perfil === 'tecnico') {
+      countsQuery = `
+        SELECT
+          COUNT(*) FILTER (WHERE status = 'aberto') as abertos,
+          COUNT(*) FILTER (WHERE status = 'em_atendimento') as em_atendimento,
+          COUNT(*) FILTER (WHERE status = 'resolvido') as resolvidos,
+          COUNT(*) FILTER (WHERE status = 'fechado') as fechados
+        FROM chamados
+        WHERE tecnico_id = $1`;
+      params = [req.user.id];
+    } else {
+      countsQuery = `
+        SELECT
+          COUNT(*) FILTER (WHERE status = 'aberto') as abertos,
+          COUNT(*) FILTER (WHERE status = 'em_atendimento') as em_atendimento,
+          COUNT(*) FILTER (WHERE status = 'resolvido') as resolvidos,
+          COUNT(*) FILTER (WHERE status = 'fechado') as fechados
+        FROM chamados
+        WHERE usuario_id = $1`;
+      params = [req.user.id];
+    }
 
-    // Chamados resolvidos
-    const resolvidos = await pool.query(
-      "SELECT COUNT(*) as total FROM chamados WHERE status = 'resolvido'"
-    );
-
-    // Chamados fechados
-    const fechados = await pool.query(
-      "SELECT COUNT(*) as total FROM chamados WHERE status = 'fechado'"
-    );
+    const counts = await pool.query(countsQuery, params);
+    const row = counts.rows[0] || {};
 
     res.json({
-      chamadosAbertos: parseInt(abertos.rows[0]?.total || 0),
-      chamadosEmAtendimento: parseInt(emAtendimento.rows[0]?.total || 0),
-      chamadosResolvidos: parseInt(resolvidos.rows[0]?.total || 0),
-      chamadosFechados: parseInt(fechados.rows[0]?.total || 0),
+      chamadosAbertos: parseInt(row.abertos || 0),
+      chamadosEmAtendimento: parseInt(row.em_atendimento || 0),
+      chamadosResolvidos: parseInt(row.resolvidos || 0),
+      chamadosFechados: parseInt(row.fechados || 0),
       tempoMedioResolucao: 0
     });
   } catch (erro) {
@@ -100,6 +117,126 @@ router.get('/usuario', authenticateToken, async (req, res) => {
   } catch (err) {
     console.error('Erro ao obter dados do usuário:', err);
     res.status(500).json({ error: 'Erro ao obter dados do usuário' });
+  }
+});
+
+// GET /api/dashboard/chamados-abertos - Lista de chamados abertos
+router.get('/chamados-abertos', authenticateToken, async (req, res) => {
+  try {
+    const perfil = req.user.perfil;
+    const userId = req.user.id;
+    let query;
+    let params = [];
+
+    if (perfil === 'administrador') {
+      query = 'SELECT id, numero_chamado, titulo, prioridade, status, criado_em FROM chamados WHERE status = $1 ORDER BY criado_em DESC LIMIT 100';
+      params = ['aberto'];
+    } else if (perfil === 'tecnico') {
+      query = `SELECT id, numero_chamado, titulo, prioridade, status, criado_em
+               FROM chamados
+               WHERE status = $1 AND (tecnico_id = $2 OR tecnico_id IS NULL)
+               ORDER BY criado_em DESC
+               LIMIT 100`;
+      params = ['aberto', userId];
+    } else {
+      query = 'SELECT id, numero_chamado, titulo, prioridade, status, criado_em FROM chamados WHERE status = $1 AND usuario_id = $2 ORDER BY criado_em DESC LIMIT 100';
+      params = ['aberto', userId];
+    }
+
+    const chamadosAbertos = await pool.query(query, params);
+    res.json({ chamadosAbertos: chamadosAbertos.rows || [] });
+  } catch (err) {
+    console.error('Erro ao obter chamados abertos:', err);
+    res.status(500).json({ error: 'Erro ao obter chamados abertos' });
+  }
+});
+
+// GET /api/dashboard/inventario - Inventário de equipamentos
+router.get('/inventario', authenticateToken, async (req, res) => {
+  try {
+    const perfil = req.user.perfil;
+    const userId = req.user.id;
+    let query;
+    let params = [];
+
+    if (perfil === 'administrador' || perfil === 'tecnico') {
+      query = `SELECT e.id, e.tipo, e.modelo, e.serie, e.localizacao, e.status, e.data_aquisicao, e.valor,
+                      COALESCE(u.nome, 'Sem responsável') as responsavel
+               FROM equipamentos e
+               LEFT JOIN usuarios u ON e.responsavel_id = u.id
+               ORDER BY e.tipo, e.modelo`;
+    } else {
+      query = `SELECT e.id, e.tipo, e.modelo, e.serie, e.localizacao, e.status, e.data_aquisicao, e.valor,
+                      COALESCE(u.nome, 'Sem responsável') as responsavel
+               FROM equipamentos e
+               LEFT JOIN usuarios u ON e.responsavel_id = u.id
+               WHERE e.responsavel_id = $1
+               ORDER BY e.tipo, e.modelo`;
+      params = [userId];
+    }
+
+    const inventario = await pool.query(query, params);
+    res.json({ inventario: inventario.rows || [] });
+  } catch (err) {
+    console.error('Erro ao obter inventário:', err);
+    res.status(500).json({ error: 'Erro ao obter inventário' });
+  }
+});
+
+// GET /api/dashboard/usuarios - Lista de usuários (administrador)
+router.get('/usuarios', authenticateToken, requireRole('administrador'), async (req, res) => {
+  try {
+    const usuarios = await pool.query(
+      'SELECT id, nome, email, perfil, departamento, telefone, ativo, criado_em FROM usuarios ORDER BY nome'
+    );
+
+    res.json({ usuarios: usuarios.rows || [] });
+  } catch (err) {
+    console.error('Erro ao obter usuários:', err);
+    res.status(500).json({ error: 'Erro ao obter usuários' });
+  }
+});
+
+// GET /api/dashboard/relatorios - Relatórios administrativos
+router.get('/relatorios', authenticateToken, requireRole('administrador'), async (req, res) => {
+  try {
+    const totalChamados = await pool.query('SELECT COUNT(*) as total FROM chamados');
+    const totalUsuarios = await pool.query('SELECT COUNT(*) as total FROM usuarios');
+    const totalEquipamentos = await pool.query('SELECT COUNT(*) as total FROM equipamentos');
+
+    const statusSummary = await pool.query(
+      'SELECT status, COUNT(*) as total FROM chamados GROUP BY status ORDER BY total DESC'
+    );
+
+    const categoriaSummary = await pool.query(
+      `SELECT cat.nome as categoria, COUNT(*) as total
+       FROM chamados c
+       JOIN categorias cat ON c.categoria_id = cat.id
+       GROUP BY cat.nome
+       ORDER BY total DESC`
+    );
+
+    const tecnicoSummary = await pool.query(
+      `SELECT u.nome as tecnico, COUNT(*) as total
+       FROM chamados c
+       JOIN usuarios u ON c.tecnico_id = u.id
+       WHERE c.tecnico_id IS NOT NULL
+       GROUP BY u.nome
+       ORDER BY total DESC
+       LIMIT 10`
+    );
+
+    res.json({
+      totalChamados: parseInt(totalChamados.rows[0]?.total || 0),
+      totalUsuarios: parseInt(totalUsuarios.rows[0]?.total || 0),
+      totalEquipamentos: parseInt(totalEquipamentos.rows[0]?.total || 0),
+      statusSummary: statusSummary.rows || [],
+      categoriaSummary: categoriaSummary.rows || [],
+      tecnicoSummary: tecnicoSummary.rows || []
+    });
+  } catch (err) {
+    console.error('Erro ao obter relatórios:', err);
+    res.status(500).json({ error: 'Erro ao obter relatórios' });
   }
 });
 

@@ -220,6 +220,132 @@
                     </div>
                 </div>
 
+                <!-- Chamados Abertos -->
+                <div id="chamados-abertos" class="content-section" style="display:none;">
+                    <h1 class="my-4"><i class="fas fa-clock"></i> Chamados Abertos</h1>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Título</th>
+                                    <th>Prioridade</th>
+                                    <th>Status</th>
+                                    <th>Data</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="chamadosAbertosTable">
+                                <tr>
+                                    <td colspan="6" class="text-center">Nenhum chamado aberto encontrado</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Inventário -->
+                <div id="inventario" class="content-section" style="display:none;">
+                    <h1 class="my-4"><i class="fas fa-boxes"></i> Inventário de Equipamentos</h1>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Tipo</th>
+                                    <th>Modelo</th>
+                                    <th>Série</th>
+                                    <th>Localização</th>
+                                    <th>Responsável</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventarioTable">
+                                <tr>
+                                    <td colspan="7" class="text-center">Nenhum equipamento cadastrado</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Relatórios -->
+                <div id="relatorios" class="content-section" style="display:none;">
+                    <h1 class="my-4"><i class="fas fa-file-alt"></i> Relatórios</h1>
+                    <div class="row mb-4">
+                        <div class="col-md-4 mb-3">
+                            <div class="card p-3">
+                                <div class="small text-muted">Chamados Totais</div>
+                                <h3 id="relatorioChamadosTotais">0</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card p-3">
+                                <div class="small text-muted">Usuários Cadastrados</div>
+                                <h3 id="relatorioUsuariosTotais">0</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card p-3">
+                                <div class="small text-muted">Equipamentos no Inventário</div>
+                                <h3 id="relatorioEquipamentosTotais">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card p-3">
+                                <h6>Status dos Chamados</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead><tr><th>Status</th><th>Total</th></tr></thead>
+                                        <tbody id="relatorioStatusTable">
+                                            <tr><td colspan="2" class="text-center">Carregando...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card p-3">
+                                <h6>Chamados por Categoria</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead><tr><th>Categoria</th><th>Total</th></tr></thead>
+                                        <tbody id="relatorioCategoriaTable">
+                                            <tr><td colspan="2" class="text-center">Carregando...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Usuários -->
+                <div id="usuarios" class="content-section" style="display:none;">
+                    <h1 class="my-4"><i class="fas fa-users"></i> Usuários</h1>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Perfil</th>
+                                    <th>Status</th>
+                                    <th>Criado em</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usuariosTable">
+                                <tr>
+                                    <td colspan="6" class="text-center">Nenhum usuário encontrado</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- Novo Chamado -->
                 <div id="novo-chamado" class="content-section" style="display:none;">
                     <h1 class="my-4"><i class="fas fa-plus-circle"></i> Abrir Novo Chamado</h1>
