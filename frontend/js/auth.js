@@ -21,14 +21,19 @@ class AuthManager {
             });
 
             const data = await response.json();
+            const userData = data.usuario || data.user;
 
-            if (response.ok) {
-                // Armazenar token e dados do usuário
+            if (response.ok && userData) {
+                // Normalize profile property for compatibility with mock and real APIs
+                if (userData.role && !userData.perfil) {
+                    userData.perfil = userData.role;
+                }
+
                 localStorage.setItem(this.tokenKey, data.token);
-                localStorage.setItem(this.userKey, JSON.stringify(data.usuario));
-                return { success: true, user: data.usuario };
+                localStorage.setItem(this.userKey, JSON.stringify(userData));
+                return { success: true, user: userData };
             } else {
-                return { success: false, error: data.error || 'Erro ao fazer login' };
+                return { success: false, error: data.error || data.message || 'Erro ao fazer login' };
             }
         } catch (error) {
             console.error('Erro na requisição:', error);
@@ -64,9 +69,12 @@ class AuthManager {
         const token = this.getToken();
 
         const headers = {
-            'Content-Type': 'application/json',
             ...options.headers
         };
+
+        if (!options.body || !(options.body instanceof FormData)) {
+            headers['Content-Type'] = 'application/json';
+        }
 
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
@@ -182,11 +190,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (user) {
             const usuarioNome = document.getElementById('usuarioNome');
             if (usuarioNome) {
-                usuarioNome.textContent = `${user.nome} (${user.perfil})`;
+                const displayRole = user.perfil || user.role || 'Usuário';
+                usuarioNome.textContent = `${user.nome} (${displayRole})`;
             }
 
             // Mostrar menu de admin se necessário
-            if (user.perfil === 'administrador') {
+            if (user.perfil === 'administrador' || user.role === 'administrador') {
                 const adminMenus = document.querySelectorAll('#adminMenu, #adminMenu2');
                 adminMenus.forEach(menu => menu.style.display = 'block');
             }

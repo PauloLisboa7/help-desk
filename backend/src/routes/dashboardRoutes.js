@@ -111,8 +111,19 @@ router.get('/tecnico', authenticateToken, requireRole('tecnico'), async (req, re
 router.get('/usuario', authenticateToken, async (req, res) => {
   try {
     const usuarioId = req.user.id;
-    const meusChamados = await pool.query('SELECT id, numero_chamado, titulo, status, prioridade, criado_em FROM chamados WHERE usuario_id = $1 ORDER BY criado_em DESC LIMIT 50', [usuarioId]);
+    const perfil = req.user.perfil;
+    let query;
+    let params;
 
+    if (perfil === 'tecnico' || ['n1', 'n2', 'n3'].includes(perfil)) {
+      query = 'SELECT id, numero_chamado, titulo, status, prioridade, patrimonio_maquina, criado_em FROM chamados WHERE tecnico_id = $1 ORDER BY criado_em DESC LIMIT 50';
+      params = [usuarioId];
+    } else {
+      query = 'SELECT id, numero_chamado, titulo, status, prioridade, patrimonio_maquina, criado_em FROM chamados WHERE usuario_id = $1 ORDER BY criado_em DESC LIMIT 50';
+      params = [usuarioId];
+    }
+
+    const meusChamados = await pool.query(query, params);
     res.json({ meusChamados: meusChamados.rows || [] });
   } catch (err) {
     console.error('Erro ao obter dados do usuário:', err);
@@ -138,6 +149,14 @@ router.get('/chamados-abertos', authenticateToken, async (req, res) => {
                ORDER BY criado_em DESC
                LIMIT 100`;
       params = ['aberto', userId];
+    } else if (['n1', 'n2', 'n3'].includes(perfil)) {
+      query = `SELECT id, numero_chamado, titulo, prioridade, status, patrimonio_maquina, criado_em
+               FROM chamados
+               WHERE status = $1 AND prioridade = ANY($2)
+               ORDER BY criado_em DESC
+               LIMIT 100`;
+      const allowedPriorities = perfil === 'n1' ? ['baixa'] : perfil === 'n2' ? ['media'] : ['alta', 'critica'];
+      params = ['aberto', allowedPriorities];
     } else {
       query = 'SELECT id, numero_chamado, titulo, prioridade, status, criado_em FROM chamados WHERE status = $1 AND usuario_id = $2 ORDER BY criado_em DESC LIMIT 100';
       params = ['aberto', userId];
@@ -151,6 +170,32 @@ router.get('/chamados-abertos', authenticateToken, async (req, res) => {
   }
 });
 
+router.get('/nivel', authenticateToken, async (req, res) => {
+  try {
+    const perfil = req.user.perfil;
+    if (!['n1', 'n2', 'n3'].includes(perfil)) {
+      return res.status(403).json({ error: 'Acesso restrito a suporte N1/N2/N3' });
+    }
+
+    const allowedPriorities = perfil === 'n1' ? ['baixa'] : perfil === 'n2' ? ['media'] : ['alta', 'critica'];
+    const result = await pool.query(
+      `SELECT c.id, c.numero_chamado, c.titulo, c.prioridade, c.status, c.criado_em, c.patrimonio_maquina,
+              EXISTS (SELECT 1 FROM anexos a WHERE a.chamado_id = c.id) AS has_attachment
+       FROM chamados c
+       WHERE c.prioridade = ANY($1)
+         AND c.status NOT IN ('resolvido', 'fechado')
+       ORDER BY c.criado_em DESC
+       LIMIT 100`,
+      [allowedPriorities]
+    );
+
+    res.json({ chamadosAbertos: result.rows || [] });
+  } catch (err) {
+    console.error('Erro ao obter chamados de nível:', err);
+    res.status(500).json({ error: 'Erro ao obter chamados de nível' });
+  }
+});
+
 // GET /api/dashboard/inventario - Inventário de equipamentos
 router.get('/inventario', authenticateToken, async (req, res) => {
   try {
@@ -159,21 +204,13 @@ router.get('/inventario', authenticateToken, async (req, res) => {
     let query;
     let params = [];
 
-    if (perfil === 'administrador' || perfil === 'tecnico') {
-      query = `SELECT e.id, e.tipo, e.modelo, e.serie, e.localizacao, e.status, e.data_aquisicao, e.valor,
-                      COALESCE(u.nome, 'Sem responsável') as responsavel
+    query = `SELECT e.id, e.tipo, e.modelo, e.serie, COALESCE(e.patrimonio, e.serie) as patrimonio, e.localizacao, e.status, e.data_aquisicao, e.valor,
+                      COALESCE(u.nome, 'Sem responsável') as responsavel,
+                      COALESCE(cp.nome, 'Sem cadastro') AS cadastrado_por
                FROM equipamentos e
                LEFT JOIN usuarios u ON e.responsavel_id = u.id
-               ORDER BY e.tipo, e.modelo`;
-    } else {
-      query = `SELECT e.id, e.tipo, e.modelo, e.serie, e.localizacao, e.status, e.data_aquisicao, e.valor,
-                      COALESCE(u.nome, 'Sem responsável') as responsavel
-               FROM equipamentos e
-               LEFT JOIN usuarios u ON e.responsavel_id = u.id
-               WHERE e.responsavel_id = $1
-               ORDER BY e.tipo, e.modelo`;
-      params = [userId];
-    }
+               LEFT JOIN usuarios cp ON e.cadastrado_por_id = cp.id
+               ORDER BY e.tipo, e.modelo`; 
 
     const inventario = await pool.query(query, params);
     res.json({ inventario: inventario.rows || [] });
