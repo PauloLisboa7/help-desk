@@ -40,42 +40,78 @@ app.get('/api/health', (req, res) => {
 
 // Login Mock
 app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body;
+  const { email, senha } = req.body;
 
   // Usuário padrão para testes
-  if (email === 'admin@helpdesk.local' && password === '123456') {
+  if (email === 'admin@helpdesk.local' && senha === '123456') {
     res.json({
       success: true,
-      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBoZWxwZGVzay5sb2NhbCIsInJvbGUiOiJhZG1pbmlzdHJhZG9yIn0.test',
-      user: {
+      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBoZWxwZGVzay5sb2NhbCIsInBlcmZpbCI6ImFkbWluaXN0cmFkb3IiIn0.test',
+      usuario: {
         id: 1,
         email: 'admin@helpdesk.local',
         nome: 'Administrador',
-        role: 'administrador',
+        perfil: 'administrador',
         departamento: 'TI',
       },
     });
-  } else if (email === 'usuario@helpdesk.local' && password === '123456') {
+  } else if (email === 'usuario@helpdesk.local' && senha === '123456') {
     res.json({
       success: true,
-      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJ1c3VhcmlvQGhlbHBkZXNrLmxvY2FsIiwicm9sZSI6InVzdWFyaW8ifQ.test',
-      user: {
+      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJ1c3VhcmlvQGhlbHBkZXNrLmxvY2FsIiwicGVyZmlsIjoidXN1YXJpbyJ9.test',
+      usuario: {
         id: 2,
         email: 'usuario@helpdesk.local',
         nome: 'Usuário Teste',
-        role: 'usuario',
+        perfil: 'usuario',
         departamento: 'Administrativo',
       },
     });
-  } else if (email === 'tecnico@helpdesk.local' && password === '123456') {
+  } else if (email === 'n1@helpdesk.local' && senha === '123456') {
     res.json({
       success: true,
-      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiZW1haWwiOiJ0ZWNuaWNvQGhlbHBkZXNrLmxvY2FsIiwicm9sZSI6InRlY25pY28ifQ.test',
-      user: {
+      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Niwicm9sZSI6Im4xIn0.test',
+      usuario: {
+        id: 6,
+        email: 'n1@helpdesk.local',
+        nome: 'Suporte N1',
+        perfil: 'n1',
+        departamento: 'Suporte',
+      },
+    });
+  } else if (email === 'n2@helpdesk.local' && senha === '123456') {
+    res.json({
+      success: true,
+      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Nywicm9sZSI6Im4yIn0.test',
+      usuario: {
+        id: 7,
+        email: 'n2@helpdesk.local',
+        nome: 'Suporte N2',
+        perfil: 'n2',
+        departamento: 'Suporte',
+      },
+    });
+  } else if (email === 'n3@helpdesk.local' && senha === '123456') {
+    res.json({
+      success: true,
+      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwicm9sZSI6Im4zIn0.test',
+      usuario: {
+        id: 8,
+        email: 'n3@helpdesk.local',
+        nome: 'Suporte N3',
+        perfil: 'n3',
+        departamento: 'Suporte',
+      },
+    });
+  } else if (email === 'tecnico@helpdesk.local' && senha === '123456') {
+    res.json({
+      success: true,
+      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiZW1haWwiOiJ0ZWNuaWNvQGhlbHBkZXNrLmxvY2FsIiwicGVyZmlsIjoidGVjbmljbyJ9.test',
+      usuario: {
         id: 3,
         email: 'tecnico@helpdesk.local',
         nome: 'Técnico Teste',
-        role: 'tecnico',
+        perfil: 'tecnico',
         departamento: 'TI',
       },
     });
@@ -92,6 +128,62 @@ app.get('/api/dashboard/stats', (req, res) => {
     chamadosResolvidos: 48,
     usuariosAtivos: 23,
   });
+});
+
+function getMockUserFromToken(authHeader) {
+  if (!authHeader) return null;
+  const token = authHeader.replace('Bearer ', '').trim();
+  switch (token) {
+    case 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBoZWxwZGVzay5sb2NhbCIsInBlcmZpbCI6ImFkbWluaXN0cmFkb3IiIn0.test':
+      return { id: 1, perfil: 'administrador' };
+    case 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJ1c3VhcmlvQGhlbHBkZXNrLmxvY2FsIiwicGVyZmlsIjoidXN1YXJpbyJ9.test':
+      return { id: 2, perfil: 'usuario' };
+    case 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Niwicm9sZSI6Im4xIn0.test':
+      return { id: 6, perfil: 'n1' };
+    case 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Nywicm9sZSI6Im4yIn0.test':
+      return { id: 7, perfil: 'n2' };
+    case 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OCwicm9sZSI6Im4zIn0.test':
+      return { id: 8, perfil: 'n3' };
+    case 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiZW1haWwiOiJ0ZWNuaWNvQGhlbHBkZXNrLmxvY2FsIiwicGVyZmlsIjoidGVjbmljbyJ9.test':
+      return { id: 3, perfil: 'tecnico' };
+    default:
+      return null;
+  }
+}
+
+app.get('/api/dashboard/nivel', (req, res) => {
+  const user = getMockUserFromToken(req.headers.authorization);
+  if (!user || !['n1', 'n2', 'n3'].includes(user.perfil)) {
+    return res.status(403).json({ success: false, error: 'Acesso restrito a suporte N1/N2/N3' });
+  }
+  const allChamados = [
+    { id: 1, numero_chamado: 'CHM-001', titulo: 'Problema com impressora', categoria: 'Impressora', prioridade: 'baixa', status: 'aberto', patrimonio_maquina: 'PAT-1001', tecnico_id: 6, criado_em: new Date() },
+    { id: 2, numero_chamado: 'CHM-002', titulo: 'Sem acesso ao email', categoria: 'Email', prioridade: 'media', status: 'em_atendimento', patrimonio_maquina: 'PAT-1002', tecnico_id: 7, criado_em: new Date() },
+    { id: 3, numero_chamado: 'CHM-003', titulo: 'Erro na aplicação', categoria: 'Sistema', prioridade: 'critica', status: 'aberto', patrimonio_maquina: 'PAT-1003', tecnico_id: 3, criado_em: new Date() },
+    { id: 4, numero_chamado: 'CHM-004', titulo: 'Rede lenta', categoria: 'Rede', prioridade: 'baixa', status: 'resolvido', patrimonio_maquina: 'PAT-1004', tecnico_id: null, criado_em: new Date() },
+    { id: 5, numero_chamado: 'CHM-005', titulo: 'Falha no login do sistema', categoria: 'Acesso', prioridade: 'alta', status: 'aberto', patrimonio_maquina: 'PAT-1005', tecnico_id: null, criado_em: new Date() }
+  ];
+  const allowedPriorities = user.perfil === 'n1' ? ['baixa'] : user.perfil === 'n2' ? ['media'] : ['alta', 'critica'];
+  const chamadosAbertos = allChamados.filter(chamado => allowedPriorities.includes(chamado.prioridade) && (!chamado.tecnico_id || chamado.tecnico_id === user.id));
+  res.json({ success: true, chamadosAbertos });
+});
+
+app.get('/api/dashboard/termo-transferencia', (req, res) => {
+  const user = getMockUserFromToken(req.headers.authorization);
+  if (!user || !['n1', 'n2', 'n3'].includes(user.perfil)) {
+    return res.status(403).json({ success: false, error: 'Acesso restrito a suporte N1/N2/N3' });
+  }
+
+  const allChamados = [
+    { id: 1, numero_chamado: 'CHM-001', titulo: 'Problema com impressora', categoria: 'Impressora', prioridade: 'baixa', status: 'aberto', patrimonio_maquina: 'PAT-1001', tecnico_id: 6, criado_em: new Date() },
+    { id: 2, numero_chamado: 'CHM-002', titulo: 'Sem acesso ao email', categoria: 'Email', prioridade: 'media', status: 'em_atendimento', patrimonio_maquina: 'PAT-1002', tecnico_id: 7, criado_em: new Date() },
+    { id: 3, numero_chamado: 'CHM-003', titulo: 'Erro na aplicação', categoria: 'Sistema', prioridade: 'critica', status: 'aberto', patrimonio_maquina: 'PAT-1003', tecnico_id: 3, criado_em: new Date() },
+    { id: 4, numero_chamado: 'CHM-004', titulo: 'Rede lenta', categoria: 'Rede', prioridade: 'baixa', status: 'resolvido', patrimonio_maquina: 'PAT-1004', tecnico_id: null, criado_em: new Date() },
+    { id: 5, numero_chamado: 'CHM-005', titulo: 'Falha no login do sistema', categoria: 'Acesso', prioridade: 'alta', status: 'aberto', patrimonio_maquina: 'PAT-1005', tecnico_id: null, criado_em: new Date() }
+  ];
+  const allowedPriorities = user.perfil === 'n1' ? ['baixa'] : user.perfil === 'n2' ? ['media'] : ['alta', 'critica'];
+  const chamados = allChamados.filter(chamado => allowedPriorities.includes(chamado.prioridade) && (!chamado.tecnico_id || chamado.tecnico_id === user.id));
+  res.json({ chamados });
 });
 
 // Chamados Mock
@@ -166,6 +258,10 @@ app.post('/api/chamados', (req, res) => {
       criado_em: new Date(),
     },
   });
+});
+
+app.get('/termo-transferencia.xlsx', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../Termo_Transferencia_Editable.xlsx'));
 });
 
 // ============================================

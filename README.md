@@ -102,6 +102,57 @@ docker-compose down
 - Backend: `http://localhost:3000`
 - PHPMyAdmin: `http://localhost:8080`
 
+## 🎛️ Painel Django Admin
+
+Um painel administrativo completo rodando em Django para gerenciar toda a aplicação.
+
+### Inicialização Rápida
+
+#### Windows
+```bash
+cd django_admin
+setup.bat
+```
+
+#### Linux/Mac
+```bash
+cd django_admin
+bash setup.sh
+```
+
+### Rodar o Painel Django
+
+#### Windows
+```bash
+cd django_admin
+run.bat
+```
+
+#### Linux/Mac
+```bash
+cd django_admin
+bash run.sh
+```
+
+Acesse em: **`http://localhost:8000/admin/`**
+
+### Funcionalidades do Django Admin
+
+- 👤 **Gerenciamento de Usuários** - CRUD, perfis, status
+- 🎫 **Chamados** - Visualizar, editar, atribuir técnicos
+- 📂 **Categorias** - Gerenciar categorias e níveis de suporte
+- 📦 **Equipamentos** - Inventário completo
+- 📝 **Atualizações** - Histórico de mudanças
+- 📎 **Anexos** - Gerenciar arquivos
+- 🔐 **Logs de Auditoria** - Rastreamento de ações
+
+### Dados Compartilhados
+
+O Django admin e o Node.js **compartilham o mesmo banco de dados PostgreSQL**, permitindo:
+- Gerenciar dados em tempo real
+- Sincronização automática entre aplicações
+- Ambos rodando simultaneamente (Node: 3000, Django: 8000)
+
 ## ⚙️ Configuração
 
 ### Variáveis de Ambiente (.env)

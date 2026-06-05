@@ -7,7 +7,7 @@ const router = express.Router();
 // GET /api/categorias - Listar categorias
 router.get('/', async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, nome, descricao FROM categorias ORDER BY nome');
+    const result = await pool.query('SELECT id, nome, descricao, nivel_suporte FROM categorias ORDER BY nome');
     res.json(result.rows);
   } catch (erro) {
     console.error('Erro ao listar categorias:', erro);

@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dbModule from '../config/database.js';
+import { authenticateToken } from '../middleware/auth.js';
 
 const pool = dbModule.pool;
 const router = express.Router();
@@ -19,7 +20,7 @@ router.post('/login', async (req, res) => {
 
     // Buscar usuário no banco
     const result = await pool.query(
-      'SELECT id, nome, email, senha, perfil FROM usuarios WHERE email = $1',
+      'SELECT id, nome, email, senha, perfil, patrimonio FROM usuarios WHERE email = $1',
       [email]
     );
 
@@ -49,7 +50,8 @@ router.post('/login', async (req, res) => {
         id: usuario.id,
         nome: usuario.nome,
         email: usuario.email,
-        perfil: usuario.perfil
+        perfil: usuario.perfil,
+        patrimonio: usuario.patrimonio || null
       }
     });
 
@@ -76,3 +78,30 @@ router.get('/verify', (req, res) => {
 });
 
 export default router;
+
+// GET /api/auth/me - retornar dados do usuário autenticado
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const usuarioId = req.user.id;
+    const result = await pool.query('SELECT id, nome, email, perfil, departamento, telefone, patrimonio FROM usuarios WHERE id = $1', [usuarioId]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Usuário não encontrado' });
+    res.json({ usuario: result.rows[0] });
+  } catch (err) {
+    console.error('Erro ao obter perfil:', err);
+    res.status(500).json({ error: 'Erro ao obter perfil' });
+  }
+});
+
+// PATCH /api/auth/me - atualizar dados do usuário autenticado (patrimônio)
+router.patch('/me', authenticateToken, async (req, res) => {
+  try {
+    const usuarioId = req.user.id;
+    const { patrimonio } = req.body;
+    await pool.query('UPDATE usuarios SET patrimonio = $1, atualizado_em = NOW() WHERE id = $2', [patrimonio || null, usuarioId]);
+    const updated = await pool.query('SELECT id, nome, email, perfil, departamento, telefone, patrimonio FROM usuarios WHERE id = $1', [usuarioId]);
+    res.json({ usuario: updated.rows[0] });
+  } catch (err) {
+    console.error('Erro ao atualizar perfil:', err);
+    res.status(500).json({ error: 'Erro ao atualizar perfil' });
+  }
+});

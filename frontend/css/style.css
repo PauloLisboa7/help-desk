@@ -183,6 +183,22 @@ body {
     transform: scale(1.05);
 }
 
+/* Ajuste: forçar texto branco para nome do usuário e link Sair na navbar */
+nav.navbar .navbar-nav .nav-link#usuarioNome,
+nav.navbar .navbar-nav .nav-link#logout,
+nav.navbar #usuarioNome,
+nav.navbar #logout,
+nav.navbar #usuarioNome i,
+nav.navbar #logout i {
+    color: #ffffff !important;
+}
+
+nav.navbar .navbar-nav .nav-link#logout:hover,
+nav.navbar .navbar-nav .nav-link#usuarioNome:hover {
+    color: #ffffff !important;
+    opacity: 0.9;
+}
+
 /* ============================================
    SIDEBAR
    ============================================ */
@@ -583,4 +599,10 @@ textarea:focus {
         box-shadow: none;
         border: 1px solid #999;
     }
+}
+
+/* Safety: garantir que áreas interativas respondam a cliques
+   (evita bloqueio por overlays acidentais em dispositivos/temas) */
+.content-section, .sidebar, .nav-link, button, a {
+    pointer-events: auto !important;
 }

@@ -98,6 +98,7 @@ async function loadDashboardData() {
         const menuNovo = document.getElementById('menuNovoChamado');
         const btnNovo = document.getElementById('btnNovoChamado');
         const menuInventario = document.getElementById('menuInventario');
+        const menuTermo = document.getElementById('menuTermoTransferencia');
         const menuPerfil = document.getElementById('menuPerfil');
         const summaryCards = document.getElementById('summaryCards');
 
@@ -105,12 +106,14 @@ async function loadDashboardData() {
             if (menuNovo) menuNovo.style.display = 'none';
             if (btnNovo) btnNovo.style.display = 'none';
             if (menuInventario) menuInventario.style.display = 'block';
+            if (menuTermo) menuTermo.style.display = 'block';
             if (menuPerfil) menuPerfil.style.display = 'none';
             if (summaryCards) summaryCards.style.display = 'none';
         } else {
             if (menuNovo) menuNovo.style.display = 'block';
             if (btnNovo) btnNovo.style.display = 'block';
             if (menuInventario) menuInventario.style.display = 'none';
+            if (menuTermo) menuTermo.style.display = 'none';
             if (menuPerfil) menuPerfil.style.display = '';
             if (summaryCards) summaryCards.style.display = '';
         }
@@ -263,6 +266,8 @@ function renderNivelPanel(perfil, data) {
     if (!panel) return;
     panel.style.display = 'block';
 
+    const stats = data.stats || {};
+
     const chamados = data.chamadosAbertos || [];
     const total = chamados.length;
     const levelLabel = perfil.toUpperCase();
@@ -293,6 +298,14 @@ function renderNivelPanel(perfil, data) {
                     <div class="card-body p-3">
                         <h6 class="text-muted">Em atendimento</h6>
                         <h3>${emAtendimentoCount}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                        <div class="card bg-light h-100">
+                    <div class="card-body p-3">
+                        <h6 class="text-muted">Resolvidos</h6>
+                        <h3>${stats.resolvidos || 0}</h3>
                     </div>
                 </div>
             </div>
@@ -561,31 +574,6 @@ function setupTriageActions() {
     tbody.addEventListener('click', handleTriageApplyClick);
 }
 
-async function handleSectionLoad(sectionId) {
-    if (loadedSections.has(sectionId)) {
-        return;
-    }
-
-    switch (sectionId) {
-        case 'chamados-abertos':
-            await loadChamadosAbertos();
-            break;
-        case 'inventario':
-            await loadInventario();
-            break;
-        case 'relatorios':
-            await loadRelatorios();
-            break;
-        case 'usuarios':
-            await loadUsuarios();
-            break;
-        default:
-            return;
-    }
-
-    loadedSections.add(sectionId);
-}
-
 async function loadChamadosAbertos() {
     try {
         const user = authManager.getUser();
@@ -693,6 +681,79 @@ async function loadChamadosAbertos() {
         }
     } catch (err) {
         console.error(err);
+    }
+}
+
+function renderTermoTransferenciaAlert(container, message, type = 'info') {
+    if (!container) return;
+    if (!message) {
+        container.innerHTML = '';
+        return;
+    }
+    container.innerHTML = `<div class="alert alert-${type}">${escapeHtml(message)}</div>`;
+}
+
+async function loadTermoTransferencia() {
+    try {
+        const resp = await authManager.fetch('/dashboard/termo-transferencia');
+        if (!resp.ok) {
+            const errorText = await resp.text().catch(() => '');
+            throw new Error(`Falha ao carregar chamados para termo de transferência (${resp.status}) ${errorText}`);
+        }
+
+        const data = await resp.json();
+        const chamados = Array.isArray(data.chamados) ? data.chamados : [];
+        const tbody = document.getElementById('termoTransferenciaTable');
+        const btnCriar = document.getElementById('btnCriarTermoTransferencia');
+        const alertContainer = document.getElementById('termoTransferenciaAlert');
+
+        if (!tbody) return;
+        if (btnCriar) btnCriar.disabled = true;
+        renderTermoTransferenciaAlert(alertContainer, '', 'info');
+
+        if (chamados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum chamado encontrado</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        chamados.forEach(chamado => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="radio" name="termoTransferenciaSelect" value="${chamado.id}" /></td>
+                <td>${escapeHtml(chamado.numero_chamado || chamado.id)}</td>
+                <td>${escapeHtml(chamado.titulo)}</td>
+                <td>${escapeHtml(chamado.categoria || chamado.categoria_nome || '')}</td>
+                <td>${escapeHtml(String(chamado.status).replace(/_/g, ' '))}</td>
+                <td>${escapeHtml(chamado.patrimonio_maquina || chamado.patrimonio || 'Não informado')}</td>
+                <td>${formatDate(chamado.criado_em)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        tbody.querySelectorAll('input[name="termoTransferenciaSelect"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (btnCriar) btnCriar.disabled = false;
+            });
+        });
+
+        if (btnCriar) {
+            btnCriar.onclick = () => {
+                const selected = document.querySelector('input[name="termoTransferenciaSelect"]:checked');
+                if (!selected) {
+                    renderTermoTransferenciaAlert(alertContainer, 'Selecione um chamado antes de criar o termo.', 'danger');
+                    return;
+                }
+
+                const chamadoId = selected.value;
+                const templateUrl = '/termo-transferencia.xlsx';
+                window.location.href = `${templateUrl}?chamado=${encodeURIComponent(chamadoId)}`;
+            };
+        }
+    } catch (err) {
+        console.error(err);
+        const alertContainer = document.getElementById('termoTransferenciaAlert');
+        renderTermoTransferenciaAlert(alertContainer, 'Erro ao carregar chamados. Tente novamente.', 'danger');
     }
 }
 
@@ -956,11 +1017,20 @@ async function loadRelatorios() {
 
 function setupNavigation() {
     // Links da sidebar
-    const navLinks = document.querySelectorAll('.nav-link');
-    console.log('[diag] setupNavigation found navLinks:', navLinks.length);
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+    console.log('[diag] setupNavigation found sidebar navLinks:', navLinks.length);
     navLinks.forEach(link => {
         link.addEventListener('click', async function(e) {
-            const targetId = this.getAttribute('href').substring(1);
+            const href = this.getAttribute('href');
+            if (!href || href === '#') {
+                return;
+            }
+
+            const targetId = href.substring(1);
+            if (!targetId) {
+                return;
+            }
+
             const user = authManager.getUser();
             const perfil = user?.perfil || user?.role;
 
@@ -985,10 +1055,18 @@ function setupNavigation() {
 }
 
 async function showSection(sectionId, forceReload = false) {
+    if (!sectionId) {
+        return;
+    }
+
     const user = authManager.getUser();
     const perfil = user?.perfil || user?.role;
 
     if (sectionId === 'inventario' && !['n1', 'n2', 'n3'].includes(perfil)) {
+        await showSection('dashboard');
+        return;
+    }
+    if (sectionId === 'termo-transferencia' && !['n1', 'n2', 'n3'].includes(perfil)) {
         await showSection('dashboard');
         return;
     }
@@ -1033,6 +1111,9 @@ async function handleSectionLoad(sectionId, forceReload = false) {
             break;
         case 'inventario':
             await loadInventario();
+            break;
+        case 'termo-transferencia':
+            await loadTermoTransferencia();
             break;
         case 'relatorios':
             await loadRelatorios();
@@ -1199,6 +1280,8 @@ async function loadProfile() {
         const current = authManager.getUser() || {};
         const merged = { ...current, ...usuario };
         localStorage.setItem('helpdesk_user', JSON.stringify(merged));
+        // Sincronizar patrimônio para o formulário de novo chamado imediatamente
+        try { syncPatrimonioToForms(usuario); } catch (e) { /* ignore if function not yet defined */ }
     } catch (err) {
         console.error('Erro ao carregar perfil:', err);
     }
@@ -1214,6 +1297,28 @@ function setPerfilEditMode(isEditing) {
     }
     if (saveBtn) saveBtn.style.display = isEditing ? 'inline-block' : 'none';
     if (editBtn) editBtn.style.display = isEditing ? 'none' : 'inline-block';
+}
+
+// Sincroniza o patrimônio do perfil para os formulários relevantes (ex: novo chamado)
+function syncPatrimonioToForms(usuario) {
+    try {
+        const user = usuario || authManager.getUser() || {};
+        const patrimonioVal = user.patrimonio || '';
+        const patrimonioMaquinaEl = document.getElementById('patrimonioMaquina');
+        const patrimonioInput = document.getElementById('patrimonioInput');
+
+        // Preencher o campo do formulário de novo chamado apenas se estiver vazio
+        if (patrimonioMaquinaEl && !patrimonioMaquinaEl.value && patrimonioVal) {
+            patrimonioMaquinaEl.value = patrimonioVal;
+        }
+
+        // Garantir que o campo de perfil exiba o valor salvo
+        if (patrimonioInput && patrimonioInput.value !== patrimonioVal) {
+            patrimonioInput.value = patrimonioVal;
+        }
+    } catch (err) {
+        console.warn('Erro ao sincronizar patrimônio entre formulários', err);
+    }
 }
 
 function setupPerfilForm() {
@@ -1247,6 +1352,8 @@ function setupPerfilForm() {
             const merged = { ...current, ...usuario };
             localStorage.setItem('helpdesk_user', JSON.stringify(merged));
             setPerfilEditMode(false);
+            // Sincronizar patrimônio imediatamente para o formulário de novo chamado
+            try { syncPatrimonioToForms(usuario); } catch (e) { /* ignore */ }
             showAlert(alertArea, 'Patrimônio salvo com sucesso', 'success');
         } catch (err) {
             console.error('Erro ao salvar perfil:', err);

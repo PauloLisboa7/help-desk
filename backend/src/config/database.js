@@ -59,12 +59,17 @@ async function executeMigrations() {
       id SERIAL PRIMARY KEY,
       nome VARCHAR(100) NOT NULL UNIQUE,
       descricao TEXT,
+      nivel_suporte VARCHAR(10) DEFAULT 'n2',
       ativo BOOLEAN DEFAULT true,
       criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );`,
 
     // Índices para categorias
     `CREATE INDEX IF NOT EXISTS idx_categorias_nome ON categorias(nome);`,
+    // Adicionar apoio ao nível de suporte nas categorias para roteamento automático
+    `ALTER TABLE categorias ADD COLUMN IF NOT EXISTS nivel_suporte VARCHAR(10) DEFAULT 'n2';`,
+    // Adicionar coluna de patrimônio ao usuário para armazenamento do número de patrimônio
+    `ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS patrimonio VARCHAR(100);`,
 
     // Tabela de Chamados
     `CREATE TABLE IF NOT EXISTS chamados (
@@ -91,6 +96,9 @@ async function executeMigrations() {
     `CREATE INDEX IF NOT EXISTS idx_chamados_usuario ON chamados(usuario_id);`,
     `CREATE INDEX IF NOT EXISTS idx_chamados_tecnico ON chamados(tecnico_id);`,
     `CREATE INDEX IF NOT EXISTS idx_chamados_vencimento ON chamados(data_vencimento);`,
+
+    // Adicionar coluna ao chamado para armazenar número de patrimônio da máquina que gerou o chamado
+    `ALTER TABLE chamados ADD COLUMN IF NOT EXISTS patrimonio_maquina VARCHAR(100);`,
 
     // Tabela de Atualizações de Chamados
     `CREATE TABLE IF NOT EXISTS atualizacoes_chamados (
@@ -129,8 +137,10 @@ async function executeMigrations() {
       tipo VARCHAR(50) NOT NULL,
       modelo VARCHAR(100) NOT NULL,
       serie VARCHAR(100) UNIQUE,
+      patrimonio VARCHAR(100),
       localizacao VARCHAR(100),
       responsavel_id INT REFERENCES usuarios(id) ON DELETE SET NULL,
+      cadastrado_por_id INT REFERENCES usuarios(id) ON DELETE SET NULL,
       status VARCHAR(50) DEFAULT 'ativo',
       data_aquisicao DATE,
       valor DECIMAL(10, 2),
@@ -142,6 +152,8 @@ async function executeMigrations() {
     `CREATE INDEX IF NOT EXISTS idx_equipamentos_tipo ON equipamentos(tipo);`,
     `CREATE INDEX IF NOT EXISTS idx_equipamentos_serie ON equipamentos(serie);`,
     `CREATE INDEX IF NOT EXISTS idx_equipamentos_status ON equipamentos(status);`,
+    `ALTER TABLE equipamentos ADD COLUMN IF NOT EXISTS patrimonio VARCHAR(100);`,
+    `ALTER TABLE equipamentos ADD COLUMN IF NOT EXISTS cadastrado_por_id INT REFERENCES usuarios(id) ON DELETE SET NULL;`,
 
     // Tabela de Logs de Auditoria
     `CREATE TABLE IF NOT EXISTS logs_auditoria (

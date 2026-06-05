@@ -143,9 +143,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (result.success) {
                     showAlert(alertArea, 'Login realizado com sucesso!', 'success');
                     
-                    // Redirecionar para dashboard
+                    // Redirecionar para Django admin se for administrador
                     setTimeout(() => {
-                        window.location.href = '/dashboard';
+                        if (result.user.perfil === 'administrador' || result.user.role === 'administrador') {
+                            window.location.href = 'http://127.0.0.1:8000/admin';
+                        } else {
+                            window.location.href = '/dashboard';
+                        }
                     }, 1000);
                 } else {
                     showAlert(alertArea, result.error, 'danger');

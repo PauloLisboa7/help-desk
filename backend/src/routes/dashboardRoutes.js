@@ -30,6 +30,17 @@ router.get('/stats', authenticateToken, async (req, res) => {
         FROM chamados
         WHERE tecnico_id = $1`;
       params = [req.user.id];
+    } else if (['n1', 'n2', 'n3'].includes(perfil)) {
+      const allowedPriorities = perfil === 'n1' ? ['baixa'] : perfil === 'n2' ? ['media'] : ['alta', 'critica'];
+      countsQuery = `
+        SELECT
+          COUNT(*) FILTER (WHERE status = 'aberto') as abertos,
+          COUNT(*) FILTER (WHERE status = 'em_atendimento') as em_atendimento,
+          COUNT(*) FILTER (WHERE status = 'resolvido') as resolvidos,
+          COUNT(*) FILTER (WHERE status = 'fechado') as fechados
+        FROM chamados
+        WHERE prioridade = ANY($1)`;
+      params = [allowedPriorities];
     } else {
       countsQuery = `
         SELECT
@@ -184,15 +195,54 @@ router.get('/nivel', authenticateToken, async (req, res) => {
        FROM chamados c
        WHERE c.prioridade = ANY($1)
          AND c.status NOT IN ('resolvido', 'fechado')
+         AND (c.tecnico_id IS NULL OR c.tecnico_id = $2)
        ORDER BY c.criado_em DESC
        LIMIT 100`,
+      [allowedPriorities, req.user.id]
+    );
+
+    const statsResult = await pool.query(
+      `SELECT
+        COUNT(*) FILTER (WHERE status = 'aberto') AS abertos,
+        COUNT(*) FILTER (WHERE status = 'em_atendimento') AS em_atendimento,
+        COUNT(*) FILTER (WHERE status = 'resolvido') AS resolvidos,
+        COUNT(*) FILTER (WHERE status = 'fechado') AS fechados
+       FROM chamados
+       WHERE prioridade = ANY($1)`,
       [allowedPriorities]
     );
 
-    res.json({ chamadosAbertos: result.rows || [] });
+    res.json({ chamadosAbertos: result.rows || [], stats: statsResult.rows[0] || {} });
   } catch (err) {
     console.error('Erro ao obter chamados de nível:', err);
     res.status(500).json({ error: 'Erro ao obter chamados de nível' });
+  }
+});
+
+router.get('/termo-transferencia', authenticateToken, async (req, res) => {
+  try {
+    const perfil = req.user.perfil;
+    if (!['n1', 'n2', 'n3'].includes(perfil)) {
+      return res.status(403).json({ error: 'Acesso restrito a suporte N1/N2/N3' });
+    }
+
+    const allowedPriorities = perfil === 'n1' ? ['baixa'] : perfil === 'n2' ? ['media'] : ['alta', 'critica'];
+    const result = await pool.query(
+      `SELECT c.id, c.numero_chamado, c.titulo, c.prioridade, c.status, c.criado_em, c.patrimonio_maquina,
+              cat.nome as categoria
+       FROM chamados c
+       LEFT JOIN categorias cat ON c.categoria_id = cat.id
+       WHERE c.prioridade = ANY($1)
+         AND (c.tecnico_id IS NULL OR c.tecnico_id = $2)
+       ORDER BY c.criado_em DESC
+       LIMIT 200`,
+      [allowedPriorities, req.user.id]
+    );
+
+    res.json({ chamados: result.rows || [] });
+  } catch (err) {
+    console.error('Erro ao obter chamados para termo de transferência:', err);
+    res.status(500).json({ error: 'Erro ao obter chamados para termo de transferência' });
   }
 });
 

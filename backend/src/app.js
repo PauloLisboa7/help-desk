@@ -116,11 +116,25 @@ app.get('/tecnico', (req, res) => {
   res.sendFile(path.join(__dirname, '../../frontend/pages/tecnico.html'));
 });
 
+// Rota para servir o modelo de termo de transferência
+app.get('/termo-transferencia.xlsx', (req, res) => {
+  const filePath = path.join(__dirname, '../../Termo_Transferencia_Editable.xlsx');
+  res.download(filePath, 'Termo_Transferencia_Editable.xlsx', (err) => {
+    if (err) {
+      console.error('Erro ao enviar arquivo de termo de transferência:', err);
+      if (!res.headersSent) {
+        res.status(404).send('Arquivo de termo de transferência não encontrado');
+      }
+    }
+  });
+});
+
 // Importar rotas
 import authRoutes from './routes/authRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import categoriasRoutes from './routes/categoriasRoutes.js';
+import { seedDatabase } from './seed.js';
 
 // Registrar rotas
 app.use('/api/auth', authRoutes);
@@ -146,15 +160,26 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Iniciar servidor
-httpServer.listen(PORT, () => {
-  console.log(`
+async function startServer() {
+  if (process.env.NODE_ENV !== 'production') {
+    try {
+      await seedDatabase();
+    } catch (err) {
+      console.error('Falha ao aplicar seed de desenvolvimento:', err.message);
+    }
+  }
+
+  httpServer.listen(PORT, () => {
+    console.log(`
 ╔════════════════════════════════════════════════════════╗
 ║   🎫 Sistema Help Desk Corporativo v3.0               ║
 ║   Servidor rodando em http://localhost:${PORT}           ║
 ║   Ambiente: ${process.env.NODE_ENV}                      ║
 ╚════════════════════════════════════════════════════════╝
   `);
-});
+  });
+}
+
+startServer();
 
 export default app;
