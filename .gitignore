@@ -8,6 +8,7 @@ env/
 venv/
 venv*/
 django_admin/venv/
+backend/django_admin/venv/
 
 # Django
 *.log

@@ -4,7 +4,7 @@
 
 ### 1. Criar ambiente virtual Python
 ```bash
-cd django_admin
+cd backend/django_admin
 python -m venv venv
 # Windows
 venv\Scripts\activate

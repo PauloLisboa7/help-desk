@@ -30,7 +30,7 @@ jobs:
       - name: Install Python deps
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r django_admin/requirements.txt
+          python -m pip install -r backend/django_admin/requirements.txt
 
       - name: Install Node deps
         run: |
@@ -39,7 +39,7 @@ jobs:
       - name: Run backend checks
         run: |
           # Rodar checagens rápidas (sem testes pesados)
-          python django_admin/manage.py check || true
+          python backend/django_admin/manage.py check || true
 
       - name: Run linters
         run: |

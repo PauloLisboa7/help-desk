@@ -110,13 +110,13 @@ Um painel administrativo completo rodando em Django para gerenciar toda a aplica
 
 #### Windows
 ```bash
-cd django_admin
+cd backend/django_admin
 setup.bat
 ```
 
 #### Linux/Mac
 ```bash
-cd django_admin
+cd backend/django_admin
 bash setup.sh
 ```
 
@@ -124,13 +124,13 @@ bash setup.sh
 
 #### Windows
 ```bash
-cd django_admin
+cd backend/django_admin
 run.bat
 ```
 
 #### Linux/Mac
 ```bash
-cd django_admin
+cd backend/django_admin
 bash run.sh
 ```
 
