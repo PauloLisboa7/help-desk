@@ -129,3 +129,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Django Admin
 ADMIN_URL = 'admin/'
+
+# Custom authentication backend: autentica contra a tabela `usuarios` (bcrypt)
+AUTHENTICATION_BACKENDS = [
+    'helpdesk_admin.core.backends.UsuarioBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]

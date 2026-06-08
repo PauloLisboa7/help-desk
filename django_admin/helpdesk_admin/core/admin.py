@@ -203,3 +203,58 @@ class LogAuditoriaAdmin(admin.ModelAdmin):
     
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+# --- Integrar criação/atualização de `auth.User` com a tabela `usuarios` ---
+from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django.contrib.auth.models import User
+import bcrypt
+
+
+class CustomUserAdmin(DjangoUserAdmin):
+    def save_model(self, request, obj, form, change):
+        # Salva o usuário Django normalmente
+        super().save_model(request, obj, form, change)
+
+        # Tentar obter a senha em texto claro (apenas disponível no formulário de criação)
+        raw_password = None
+        try:
+            raw_password = form.cleaned_data.get('password1')
+        except Exception:
+            raw_password = None
+
+        # Se houver senha em texto, sincronizar com a tabela `usuarios`
+        if raw_password:
+            try:
+                hashed = bcrypt.hashpw(raw_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            except Exception:
+                hashed = None
+
+            if hashed:
+                # Criar ou atualizar registro na tabela `usuarios`
+                try:
+                    usuario_obj, created = Usuario.objects.get_or_create(
+                        email=obj.email,
+                        defaults={
+                            'nome': obj.get_full_name() or obj.username,
+                            'senha': hashed,
+                            'perfil': 'usuario',
+                            'ativo': True,
+                        }
+                    )
+                    if not created:
+                        usuario_obj.senha = hashed
+                        usuario_obj.nome = obj.get_full_name() or obj.username
+                        usuario_obj.ativo = True
+                        usuario_obj.save()
+                except Exception:
+                    # não falhar o admin por conta dessa sincronização
+                    pass
+
+
+try:
+    admin.site.unregister(User)
+except Exception:
+    pass
+
+admin.site.register(User, CustomUserAdmin)
