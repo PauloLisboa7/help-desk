@@ -1,6 +1,9 @@
 # Python
 __pycache__/
 *.py[cod]
+# Virtual environments
+/django_admin/venv/
+/backend/django_admin/venv/
 *.pyc
 *.pyo
 *.pyd
