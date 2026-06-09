@@ -120,6 +120,75 @@ app.post('/api/auth/login', (req, res) => {
   }
 });
 
+// Forgot Password Mock
+app.post('/api/auth/forgot-password', (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email é obrigatório' });
+  }
+
+  // Simulando envio de email para usuários conhecidos
+  const mockUsers = [
+    'admin@helpdesk.local',
+    'usuario@helpdesk.local',
+    'n1@helpdesk.local',
+    'n2@helpdesk.local',
+    'n3@helpdesk.local',
+    'tecnico@helpdesk.local'
+  ];
+
+  if (mockUsers.includes(email)) {
+    const mockToken = Math.random().toString(36).substring(2, 15);
+    const resetUrl = `http://localhost:3000/reset-password.html?email=${encodeURIComponent(email)}&token=${mockToken}`;
+    
+    console.log(`🔐 [DEV] Token de redefinição para ${email}:`, mockToken);
+    console.log(`🔗 [DEV] Link de redefinição:`, resetUrl);
+
+    res.json({
+      message: 'Se a conta existir, você receberá instruções para redefinir sua senha.',
+      debugToken: mockToken,
+      debugLink: resetUrl
+    });
+  } else {
+    // Por segurança, retorna a mesma mensagem independentemente
+    res.json({
+      message: 'Se a conta existir, você receberá instruções para redefinir sua senha.'
+    });
+  }
+});
+
+// Reset Password Mock
+app.post('/api/auth/reset-password', (req, res) => {
+  const { email, token, senha } = req.body;
+
+  if (!email || !token || !senha) {
+    return res.status(400).json({ error: 'Email, token e nova senha são obrigatórios' });
+  }
+
+  // Em desenvolvimento, aceita qualquer combinação válida
+  const mockUsers = [
+    'admin@helpdesk.local',
+    'usuario@helpdesk.local',
+    'n1@helpdesk.local',
+    'n2@helpdesk.local',
+    'n3@helpdesk.local',
+    'tecnico@helpdesk.local'
+  ];
+
+  if (!mockUsers.includes(email)) {
+    return res.status(400).json({ error: 'Email ou token inválidos' });
+  }
+
+  if (!token || token.length < 5) {
+    return res.status(400).json({ error: 'Token inválido ou expirado' });
+  }
+
+  res.json({
+    message: 'Senha redefinida com sucesso. Faça login com a nova senha.'
+  });
+});
+
 // Dashboard Stats Mock
 app.get('/api/dashboard/stats', (req, res) => {
   res.json({
