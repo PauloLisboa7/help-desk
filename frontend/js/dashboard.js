@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Configurar formulários
     setupForms();
+    setupChatbot();
     setupRealtime();
     setupTriageActions();
 });
@@ -98,6 +99,7 @@ async function loadDashboardData() {
         const menuNovo = document.getElementById('menuNovoChamado');
         const btnNovo = document.getElementById('btnNovoChamado');
         const menuInventario = document.getElementById('menuInventario');
+        const menuPatrimonio = document.getElementById('menuPatrimonioCategorias');
         const menuTermo = document.getElementById('menuTermoTransferencia');
         const menuPerfil = document.getElementById('menuPerfil');
         const summaryCards = document.getElementById('summaryCards');
@@ -106,13 +108,23 @@ async function loadDashboardData() {
             if (menuNovo) menuNovo.style.display = 'none';
             if (btnNovo) btnNovo.style.display = 'none';
             if (menuInventario) menuInventario.style.display = 'block';
+            if (menuPatrimonio) menuPatrimonio.style.display = 'block';
             if (menuTermo) menuTermo.style.display = 'block';
             if (menuPerfil) menuPerfil.style.display = 'none';
             if (summaryCards) summaryCards.style.display = 'none';
+        } else if (perfil === 'administrador' || perfil === 'tecnico') {
+            if (menuNovo) menuNovo.style.display = 'block';
+            if (btnNovo) btnNovo.style.display = 'block';
+            if (menuInventario) menuInventario.style.display = 'block';
+            if (menuPatrimonio) menuPatrimonio.style.display = 'block';
+            if (menuTermo) menuTermo.style.display = 'block';
+            if (menuPerfil) menuPerfil.style.display = '';
+            if (summaryCards) summaryCards.style.display = '';
         } else {
             if (menuNovo) menuNovo.style.display = 'block';
             if (btnNovo) btnNovo.style.display = 'block';
             if (menuInventario) menuInventario.style.display = 'none';
+            if (menuPatrimonio) menuPatrimonio.style.display = 'none';
             if (menuTermo) menuTermo.style.display = 'none';
             if (menuPerfil) menuPerfil.style.display = '';
             if (summaryCards) summaryCards.style.display = '';
@@ -941,6 +953,86 @@ async function loadInventario() {
     }
 }
 
+async function loadPatrimonioCategorias() {
+    try {
+        const resp = await authManager.fetch('/patrimonio-categorias');
+        if (!resp.ok) {
+            throw new Error('Falha ao carregar categorias de patrimônio');
+        }
+
+        const data = await resp.json();
+        const tbody = document.getElementById('patrimonioCategoriasTable');
+        if (!tbody) return;
+
+        if (!Array.isArray(data) || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma categoria de patrimônio cadastrada</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        data.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${escapeHtml(item.nome)}</td>
+                <td>${escapeHtml(item.descricao || '')}</td>
+                <td>${item.ativo ? 'Ativa' : 'Inativa'}</td>
+                <td>${formatDate(item.criado_em)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+function setupPatrimonioCategoriasForm() {
+    const form = document.getElementById('patrimonioCategoriasForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const nome = document.getElementById('tipoPatrimonio')?.value.trim();
+        const descricao = document.getElementById('descricaoTipoPatrimonio')?.value.trim();
+        const alertArea = document.getElementById('patrimonioCategoriasAlert');
+
+        if (!nome) {
+            showAlert(alertArea, 'Informe o nome da categoria', 'danger');
+            return;
+        }
+
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn?.innerHTML;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+        }
+
+        try {
+            const resp = await authManager.fetch('/patrimonio-categorias', {
+                method: 'POST',
+                body: JSON.stringify({ nome, descricao })
+            });
+
+            if (!resp.ok) {
+                const errorData = await resp.json();
+                throw new Error(errorData.error || 'Erro ao salvar categoria');
+            }
+
+            showAlert(alertArea, 'Categoria de patrimônio salva com sucesso.', 'success');
+            form.reset();
+            await loadPatrimonioCategorias();
+        } catch (err) {
+            showAlert(alertArea, err.message || 'Erro ao salvar categoria', 'danger');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }
+    });
+}
+
 async function loadUsuarios() {
     try {
         const resp = await authManager.fetch('/dashboard/usuarios');
@@ -1070,6 +1162,10 @@ async function showSection(sectionId, forceReload = false) {
         await showSection('dashboard');
         return;
     }
+    if (sectionId === 'patrimonio-categorias' && !['administrador', 'tecnico', 'n1', 'n2', 'n3'].includes(perfil)) {
+        await showSection('dashboard');
+        return;
+    }
     // Bloquear acesso direto à aba 'perfil' para níveis N1/N2/N3
     if (sectionId === 'perfil' && ['n1', 'n2', 'n3'].includes(perfil)) {
         await showSection('dashboard');
@@ -1111,6 +1207,9 @@ async function handleSectionLoad(sectionId, forceReload = false) {
             break;
         case 'inventario':
             await loadInventario();
+            break;
+        case 'patrimonio-categorias':
+            await loadPatrimonioCategorias();
             break;
         case 'termo-transferencia':
             await loadTermoTransferencia();
@@ -1254,6 +1353,7 @@ function setupForms() {
     const currentUser = authManager.getUser() || {};
     const currentPerfil = currentUser.perfil || currentUser.role;
     if (perfilForm && !['n1', 'n2', 'n3'].includes(currentPerfil)) setupPerfilForm();
+    setupPatrimonioCategoriasForm();
 }
 
 async function loadProfile() {
@@ -1398,6 +1498,77 @@ function priorityLabel(priority) {
     };
     if (!priority) return 'N2';
     return map[priority] || String(priority).toUpperCase();
+}
+
+function setupChatbot() {
+    const toggle = document.getElementById('chatbotToggle');
+    const panel = document.getElementById('chatbotPanel');
+    const closeBtn = document.getElementById('chatbotClose');
+    const sendBtn = document.getElementById('chatbotSend');
+    const input = document.getElementById('chatbotInput');
+    const messages = document.getElementById('chatbotMessages');
+    const status = document.getElementById('chatbotStatus');
+
+    if (!toggle || !panel || !closeBtn || !sendBtn || !input || !messages || !status) return;
+
+    toggle.addEventListener('click', () => {
+        panel.classList.toggle('d-none');
+        if (!panel.classList.contains('d-none')) {
+            input.focus();
+        }
+    });
+
+    closeBtn.addEventListener('click', () => {
+        panel.classList.add('d-none');
+    });
+
+    sendBtn.addEventListener('click', async () => {
+        await handleChatbotSend();
+    });
+
+    input.addEventListener('keydown', async (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            await handleChatbotSend();
+        }
+    });
+
+    function appendMessage(text, type = 'bot') {
+        const item = document.createElement('div');
+        item.className = `chatbot-message ${type}`;
+        item.textContent = text;
+        messages.appendChild(item);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    async function handleChatbotSend() {
+        const text = input.value.trim();
+        if (!text) return;
+
+        appendMessage(text, 'user');
+        input.value = '';
+        status.textContent = 'Enviando para o assistente...';
+
+        try {
+            const response = await authManager.fetch('/chatbot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: text })
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Erro ao obter resposta do chatbot');
+            }
+
+            appendMessage(data.message || 'O assistente não retornou resposta.', 'bot');
+            status.textContent = 'Resposta recebida com sucesso.';
+        } catch (err) {
+            console.error('Chatbot error:', err);
+            appendMessage(err.message || 'Erro ao se conectar com o assistente.', 'bot');
+            status.textContent = 'Falha ao enviar mensagem.';
+        }
+    }
 }
 
 // ============================================

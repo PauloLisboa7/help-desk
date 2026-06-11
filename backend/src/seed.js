@@ -70,6 +70,25 @@ export async function seedDatabase() {
     ]);
     console.log('✅ Categorias inseridas');
 
+    console.log('📚 Inserindo categorias de patrimônio...');
+    await pool.query(`
+      INSERT INTO patrimonio_categorias (nome, descricao, ativo)
+      VALUES
+        ($1, $2, true),
+        ($3, $4, true),
+        ($5, $6, true),
+        ($7, $8, true),
+        ($9, $10, true)
+      ON CONFLICT (nome) DO UPDATE SET descricao = EXCLUDED.descricao
+    `, [
+      'Monitor', 'Monitores e telas',
+      'Gabinete', 'Gabinetes e torres',
+      'Impressora', 'Impressoras e multifuncionais',
+      'Roteador', 'Roteadores e equipamentos de rede',
+      'Teclado', 'Teclados e periféricos'
+    ]);
+    console.log('✅ Categorias de patrimônio inseridas');
+
     // Recuperar IDs de usuários e categorias para dados relacionados
     const adminUser = await pool.query('SELECT id FROM usuarios WHERE email = $1', ['admin@helpdesk.local']);
     const regularUser = await pool.query('SELECT id FROM usuarios WHERE email = $1', ['usuario@helpdesk.local']);

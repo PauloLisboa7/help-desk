@@ -167,7 +167,111 @@ document.addEventListener('DOMContentLoaded', function() {
         if (forgotPasswordLink) {
             forgotPasswordLink.addEventListener('click', function(e) {
                 e.preventDefault();
-                alert('Funcionalidade de recuperação de senha em desenvolvimento.\nEntre em contato com o administrador.');
+                const modalEl = document.getElementById('forgotPasswordModal');
+                if (modalEl && window.bootstrap && window.bootstrap.Modal) {
+                    const modal = new bootstrap.Modal(modalEl);
+                    modal.show();
+                }
+            });
+        }
+
+        const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+        if (forgotPasswordForm) {
+            forgotPasswordForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const emailOrUser = document.getElementById('forgotEmail')?.value.trim();
+                const alertArea = document.getElementById('forgotPasswordAlert');
+                if (!emailOrUser) {
+                    showAlert(alertArea, 'Informe seu email ou usuário', 'danger');
+                    return;
+                }
+
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn?.innerHTML;
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+                }
+
+                try {
+                    const response = await fetch('/api/auth/forgot-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: emailOrUser })
+                    });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Erro ao solicitar recuperação de senha');
+                    }
+                    const message = data.message || 'Se a conta existir, você receberá instruções para redefinir sua senha.';
+                    const details = data.debugLink ? `<br/><small>Link de teste: <a href="${data.debugLink}" target="_blank">Abrir</a></small>` : '';
+                    showAlert(alertArea, `${message}${details}`, 'success');
+                } catch (error) {
+                    showAlert(alertArea, error.message || 'Erro ao solicitar recuperação de senha', 'danger');
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                }
+            });
+        }
+
+        const resetPasswordForm = document.getElementById('resetPasswordForm');
+        if (resetPasswordForm) {
+            const emailInput = document.getElementById('resetEmail');
+            const tokenInput = document.getElementById('resetToken');
+            const queryParams = new URLSearchParams(window.location.search);
+            if (emailInput) emailInput.value = queryParams.get('email') || '';
+            if (tokenInput) tokenInput.value = queryParams.get('token') || '';
+
+            resetPasswordForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const senha = document.getElementById('novaSenha')?.value;
+                const confirmSenha = document.getElementById('confirmNovaSenha')?.value;
+                const alertArea = document.getElementById('alertArea');
+                const email = emailInput?.value;
+                const token = tokenInput?.value;
+
+                if (!senha || !confirmSenha) {
+                    showAlert(alertArea, 'Informe a nova senha e a confirmação', 'danger');
+                    return;
+                }
+                if (senha !== confirmSenha) {
+                    showAlert(alertArea, 'As senhas não coincidem', 'danger');
+                    return;
+                }
+                if (!email || !token) {
+                    showAlert(alertArea, 'O link de recuperação está incompleto. Verifique o email recebido.', 'danger');
+                    return;
+                }
+
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn?.innerHTML;
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+                }
+
+                try {
+                    const response = await fetch('/api/auth/reset-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, token, senha })
+                    });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Erro ao redefinir senha');
+                    }
+                    showAlert(alertArea, data.message || 'Senha redefinida com sucesso', 'success');
+                } catch (error) {
+                    showAlert(alertArea, error.message || 'Erro ao redefinir senha', 'danger');
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                }
             });
         }
     }

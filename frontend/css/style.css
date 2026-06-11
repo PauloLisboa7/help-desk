@@ -325,15 +325,105 @@ h1 {
     color: white;
 }
 
-.btn-secondary:hover {
-    background-color: #5a6268;
-}
+    .chatbot-widget {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        z-index: 1100;
+        font-family: inherit;
+    }
 
-.btn-outline-secondary {
-    color: #6c757d;
-    border-color: #6c757d;
-}
+    .chatbot-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 999px;
+        padding: 0.85rem 1rem;
+        font-weight: 700;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+    }
 
+    .chatbot-toggle:hover {
+        background-color: var(--secondary-color);
+    }
+
+    .chatbot-panel {
+        width: 360px;
+        max-width: calc(100vw - 40px);
+        border-radius: 20px;
+        background: white;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        margin-top: 1rem;
+    }
+
+    .chatbot-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--primary-color);
+        color: white;
+        padding: 1rem;
+        font-weight: 700;
+    }
+
+    .chatbot-messages {
+        min-height: 240px;
+        max-height: 320px;
+        overflow-y: auto;
+        padding: 1rem;
+        background: #f5f8ff;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .chatbot-message {
+        border-radius: 18px;
+        padding: 0.85rem 1rem;
+        line-height: 1.5;
+        max-width: 100%;
+        word-break: break-word;
+    }
+
+    .chatbot-message.user {
+        background: #e7f0ff;
+        align-self: flex-end;
+    }
+
+    .chatbot-message.bot {
+        background: white;
+        border: 1px solid #dde3ef;
+        align-self: flex-start;
+    }
+
+    .chatbot-input-area {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem 1rem;
+        background: #ffffff;
+    }
+
+    .chatbot-input-area textarea {
+        flex: 1;
+        min-height: 64px;
+        border-radius: 14px;
+        border: 1px solid #d8dde9;
+        padding: 0.85rem 1rem;
+        resize: none;
+    }
+
+    .chatbot-status {
+        padding: 0.75rem 1rem 1rem;
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
 .btn-outline-secondary:hover {
     background-color: #6c757d;
     border-color: #6c757d;

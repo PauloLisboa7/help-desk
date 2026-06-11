@@ -72,6 +72,11 @@
                                 <i class="fas fa-boxes"></i> Inventário
                             </a>
                         </li>
+                        <li class="nav-item" id="menuPatrimonioCategorias" style="display:none;">
+                            <a class="nav-link" href="#patrimonio-categorias">
+                                <i class="fas fa-tags"></i> Categorias de Patrimônio
+                            </a>
+                        </li>
                         <li class="nav-item" id="menuTermoTransferencia" style="display:none;">
                             <a class="nav-link" href="#termo-transferencia">
                                 <i class="fas fa-file-excel"></i> Termo de Transferência
@@ -325,6 +330,50 @@
                     </div>
                 </div>
 
+                <!-- Categorias de Patrimônio -->
+                <div id="patrimonio-categorias" class="content-section" style="display:none;">
+                    <h1 class="my-4"><i class="fas fa-tags"></i> Categorias de Patrimônio</h1>
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <form id="patrimonioCategoriasForm" class="row g-3">
+                                <div class="col-md-5">
+                                    <label for="tipoPatrimonio" class="form-label">Nome da Categoria *</label>
+                                    <input type="text" class="form-control" id="tipoPatrimonio" name="nome" required>
+                                </div>
+                                <div class="col-md-5">
+                                    <label for="descricaoTipoPatrimonio" class="form-label">Descrição</label>
+                                    <input type="text" class="form-control" id="descricaoTipoPatrimonio" name="descricao" placeholder="Ex: Impressoras, monitores, roteadores">
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-plus"></i> Adicionar
+                                    </button>
+                                </div>
+                                <div class="col-12" id="patrimonioCategoriasAlert"></div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Categoria</th>
+                                    <th>Descrição</th>
+                                    <th>Status</th>
+                                    <th>Criada em</th>
+                                </tr>
+                            </thead>
+                            <tbody id="patrimonioCategoriasTable">
+                                <tr>
+                                    <td colspan="5" class="text-center">Nenhuma categoria de patrimônio cadastrada</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- Relatórios -->
                 <div id="relatorios" class="content-section" style="display:none;">
                     <h1 class="my-4"><i class="fas fa-file-alt"></i> Relatórios</h1>
@@ -550,6 +599,26 @@
             </div>
         </div>
     </div>
+    <div id="chatbotWidget" class="chatbot-widget">
+        <button id="chatbotToggle" class="chatbot-toggle">
+            <i class="fas fa-robot"></i> Assistente
+        </button>
+        <div id="chatbotPanel" class="chatbot-panel d-none">
+            <div class="chatbot-header">
+                <span><i class="fas fa-comments"></i> Assistente AI</span>
+                <button id="chatbotClose" type="button" class="btn-close btn-close-white" aria-label="Fechar"></button>
+            </div>
+            <div id="chatbotMessages" class="chatbot-messages">
+                <div class="chatbot-empty">Olá! Faça uma pergunta sobre suporte, chamados ou inventário.</div>
+            </div>
+            <div class="chatbot-input-area">
+                <textarea id="chatbotInput" class="form-control" placeholder="Digite sua pergunta..." rows="2"></textarea>
+                <button id="chatbotSend" class="btn btn-primary">Enviar</button>
+            </div>
+            <div id="chatbotStatus" class="chatbot-status text-muted">Status do assistente</div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/js/auth.js"></script>
     <script src="/socket.io/socket.io.js"></script>

@@ -189,6 +189,19 @@ app.post('/api/auth/reset-password', (req, res) => {
   });
 });
 
+// Chatbot Mock
+app.post('/api/chatbot', (req, res) => {
+  const { message } = req.body;
+
+  if (!message || !String(message).trim()) {
+    return res.status(400).json({ error: 'Mensagem é obrigatória' });
+  }
+
+  res.json({
+    message: `Olá! Esta é uma resposta de teste para: "${String(message).trim()}". Em produção, o chatbot usará o Google Cloud AI.`
+  });
+});
+
 // Dashboard Stats Mock
 app.get('/api/dashboard/stats', (req, res) => {
   res.json({

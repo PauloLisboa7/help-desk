@@ -70,6 +70,9 @@ async function executeMigrations() {
     `ALTER TABLE categorias ADD COLUMN IF NOT EXISTS nivel_suporte VARCHAR(10) DEFAULT 'n2';`,
     // Adicionar coluna de patrimônio ao usuário para armazenamento do número de patrimônio
     `ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS patrimonio VARCHAR(100);`,
+    // Adicionar colunas de reset de senha ao usuário
+    `ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);`,
+    `ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMP;`,
 
     // Tabela de Chamados
     `CREATE TABLE IF NOT EXISTS chamados (
@@ -154,6 +157,15 @@ async function executeMigrations() {
     `CREATE INDEX IF NOT EXISTS idx_equipamentos_status ON equipamentos(status);`,
     `ALTER TABLE equipamentos ADD COLUMN IF NOT EXISTS patrimonio VARCHAR(100);`,
     `ALTER TABLE equipamentos ADD COLUMN IF NOT EXISTS cadastrado_por_id INT REFERENCES usuarios(id) ON DELETE SET NULL;`,
+
+    // Tabela de Categorias de Patrimônio
+    `CREATE TABLE IF NOT EXISTS patrimonio_categorias (
+      id SERIAL PRIMARY KEY,
+      nome VARCHAR(100) NOT NULL UNIQUE,
+      descricao TEXT,
+      ativo BOOLEAN DEFAULT true,
+      criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );`,
 
     // Tabela de Logs de Auditoria
     `CREATE TABLE IF NOT EXISTS logs_auditoria (

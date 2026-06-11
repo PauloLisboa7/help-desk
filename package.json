@@ -10,7 +10,7 @@
     "dev:test": "NODE_ENV=development node backend/src/app-dev.js",
     "migrate": "node backend/src/config/database.js",
     "seed": "node backend/src/seed.js",
-    "test": "jest --coverage",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage",
     "lint": "eslint backend/src --fix",
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",

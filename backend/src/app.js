@@ -3,7 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname } from 'path';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
@@ -134,13 +134,17 @@ import authRoutes from './routes/authRoutes.js';
 import ticketRoutes from './routes/ticketRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import categoriasRoutes from './routes/categoriasRoutes.js';
+import patrimonioCategoriasRoutes from './routes/patrimonioCategoriasRoutes.js';
+import chatbotRoutes from './routes/chatbotRoutes.js';
 import { seedDatabase } from './seed.js';
 
 // Registrar rotas
 app.use('/api/auth', authRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/chamados', ticketRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/categorias', categoriasRoutes);
+app.use('/api/patrimonio-categorias', patrimonioCategoriasRoutes);
 
 // Tratamento de erros 404
 app.use((req, res) => {
@@ -180,6 +184,10 @@ async function startServer() {
   });
 }
 
-startServer();
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMain) {
+  startServer();
+}
 
 export default app;
+export { startServer };

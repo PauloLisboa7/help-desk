@@ -104,6 +104,31 @@
         </div>
     </div>
 
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="forgotPasswordModalLabel">Recuperação de Senha</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <form id="forgotPasswordForm">
+                    <div class="modal-body">
+                        <p>Informe o seu email ou nome de usuário para receber instruções de recuperação.</p>
+                        <div class="mb-3">
+                            <label for="forgotEmail" class="form-label">Email ou Usuário</label>
+                            <input type="text" class="form-control" id="forgotEmail" name="email" placeholder="Digite seu email ou usuário" required>
+                        </div>
+                        <div id="forgotPasswordAlert"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <button type="submit" class="btn btn-primary">Enviar instruções</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <footer class="footer">
         <p class="mb-0">&copy; 2026 Help Desk Corporativo - Todos os direitos reservados | v3.0</p>
     </footer>
